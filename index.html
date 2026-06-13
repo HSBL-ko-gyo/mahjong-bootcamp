@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雀力ブートキャンプ</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --felt:#0d3a2a;
+  --felt-light:#155a40;
+  --ivory:#f7f2e4;
+  --ivory-dim:#e9e2cf;
+  --amber:#d9a23e;
+  --chun:#c0392b;
+  --hatsu:#1e7a4c;
+  --pin-blue:#2b4f9e;
+  --ink:#2a241c;
+  --gold:#e8c879;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(255,255,255,.07), transparent 55%),
+    radial-gradient(ellipse at 50% 115%, rgba(0,0,0,.45), transparent 60%),
+    var(--felt);
+  color:var(--ivory);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+}
+.wrap{width:100%;max-width:680px;padding:20px 14px 60px;}
+header{text-align:center;margin-bottom:14px;}
+.eyebrow{font-size:11px;letter-spacing:.35em;color:var(--gold);margin-bottom:6px;}
+h1{
+  font-family:'Shippori Mincho B1',serif;font-weight:800;
+  font-size:clamp(26px,7vw,38px);letter-spacing:.08em;
+  text-shadow:0 2px 8px rgba(0,0,0,.5);
+}
+.sub{font-size:12.5px;color:rgba(247,242,228,.75);margin-top:6px;}
+/* tabs */
+.tabs{display:flex;gap:2px;margin:18px 0 16px;border-bottom:2px solid rgba(232,200,121,.35);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  flex:1 0 auto;background:transparent;border:none;color:rgba(247,242,228,.6);
+  font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:clamp(11px,3.1vw,14px);
+  white-space:nowrap;
+  padding:10px 2px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:color .15s;
+}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px;}
+/* card */
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.12)),var(--felt-light);
+  border:1px solid rgba(232,200,121,.3);
+  border-radius:14px;padding:18px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);
+}
+.situ{
+  display:inline-block;font-size:12px;font-weight:700;color:var(--ink);
+  background:var(--gold);border-radius:999px;padding:3px 12px;margin-bottom:10px;
+}
+.qtext{font-size:16px;font-weight:700;line-height:1.6;margin-bottom:14px;}
+.progress{font-size:12px;color:rgba(247,242,228,.65);margin-bottom:8px;display:flex;justify-content:space-between;}
+/* tiles */
+.hand{display:flex;flex-wrap:nowrap;justify-content:center;gap:4px;margin:8px 0 4px;container-type:inline-size;}
+.hand .tile{flex:1 1 0;min-width:0;width:auto;max-width:46px;}
+.tile{
+  position:relative;width:46px;aspect-ratio:3/4.2;
+  background:linear-gradient(180deg,#fffdf6,var(--ivory) 60%,var(--ivory-dim));
+  border-radius:6px;border:none;cursor:pointer;
+  box-shadow:0 4px 0 var(--amber),0 6px 8px rgba(0,0,0,.45);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:'Shippori Mincho B1',serif;font-weight:800;color:var(--ink);
+  transition:transform .12s;
+  user-select:none;
+}
+.tile:active{transform:translateY(3px);box-shadow:0 2px 0 var(--amber),0 4px 6px rgba(0,0,0,.4);}
+.tile:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+.tile .num{font-size:clamp(10px,3.4cqw,20px);line-height:1.1;}
+.tile .suit{font-size:clamp(7px,2.3cqw,13px);line-height:1.1;}
+.tile.man .suit{color:var(--chun);}
+.tile.pin .num{color:var(--pin-blue);}
+.tile.pin .suit{color:var(--pin-blue);}
+.tile.sou .num{color:var(--hatsu);}
+.tile.sou .suit{color:var(--hatsu);}
+.tile .honor{font-size:clamp(11px,3.8cqw,22px);}
+.tile .honor.chun{color:var(--chun);}
+.tile .honor.hatsu{color:var(--hatsu);}
+.tile .haku{width:62%;height:72%;border:2.5px solid #9fb6d8;border-radius:4px;}
+.tile.static{cursor:default;}
+.minihand{margin-bottom:4px;}
+.minihand .tile{pointer-events:none;}
+.note{font-size:12.5px;font-weight:700;color:var(--gold);text-align:center;margin:6px 0 12px;letter-spacing:.04em;}
+.terms{margin:0 0 12px;background:rgba(0,0,0,.18);border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.8;color:rgba(247,242,228,.85);}
+.terms b{color:var(--gold);font-weight:700;}
+.terms .tlabel{font-size:10.5px;letter-spacing:.2em;color:rgba(232,200,121,.8);display:block;margin-bottom:2px;}
+/* ミニ牌・面子分解表示 */
+.tile.mini{width:30px;border-radius:4px;box-shadow:0 3px 0 var(--amber),0 4px 5px rgba(0,0,0,.4);}
+.tile.mini .num{font-size:13px;}
+.tile.mini .suit{font-size:9px;}
+.tile.mini .honor{font-size:14px;}
+.tile.mini .haku{border-width:2px;}
+.tile.ghost{background:rgba(247,242,228,.06);box-shadow:none;border:2px dashed var(--gold);}
+.tile.ghost .num,.tile.ghost .suit,.tile.ghost .honor{color:var(--gold)!important;}
+.choice.tilechoice{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.decomp{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 12px;margin:10px 0 4px;}
+.grp{display:flex;gap:3px;padding:5px 6px;border-radius:8px;background:rgba(0,0,0,.15);}
+.grp.waitgrp{background:rgba(232,200,121,.16);outline:1.5px dashed var(--gold);}
+.grp-label{width:100%;text-align:center;font-size:11px;color:rgba(247,242,228,.65);margin-top:-2px;}
+.waitline{display:flex;align-items:center;justify-content:center;gap:7px;margin:8px 0 2px;font-size:13px;font-weight:700;color:var(--gold);}
+.winrow{display:flex;align-items:center;gap:8px;margin:7px 0;padding:6px;border-radius:8px;background:rgba(0,0,0,.13);}
+.wintile-label{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--gold);min-width:38px;}
+.winform{margin:0;justify-content:flex-start;flex:1;}
+.grp.headgrp{background:rgba(43,79,158,.28);outline:1.5px solid rgba(120,150,210,.6);}
+.tile.winhi{outline:2px solid var(--gold);outline-offset:1px;}
+.tile.winhi .num,.tile.winhi .suit,.tile.winhi .honor{filter:none;}
+.tile.picked-right{box-shadow:0 5px 0 var(--hatsu),0 0 0 3px var(--hatsu),0 8px 10px rgba(0,0,0,.45);}
+.tile.picked-wrong{box-shadow:0 5px 0 var(--chun),0 0 0 3px var(--chun),0 8px 10px rgba(0,0,0,.45);}
+.tile.dim{opacity:.45;}
+/* result */
+.result{margin-top:14px;border-radius:10px;padding:13px 14px;font-size:14px;line-height:1.75;display:none;}
+.result.show{display:block;animation:pop .2s ease;}
+.result.ok{background:rgba(30,122,76,.25);border:1px solid var(--hatsu);}
+.result.ng{background:rgba(192,57,43,.22);border:1px solid var(--chun);}
+.result .verdict{font-family:'Shippori Mincho B1',serif;font-size:18px;font-weight:800;margin-bottom:4px;}
+.result.ok .verdict{color:#7fd6a8;}
+.result.ng .verdict{color:#f0a195;}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+/* choice buttons */
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.choice{
+  background:linear-gradient(180deg,#fffdf6,var(--ivory-dim));
+  color:var(--ink);border:none;border-radius:9px;padding:12px 14px;
+  font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:14.5px;
+  text-align:left;cursor:pointer;box-shadow:0 3px 0 var(--amber),0 5px 8px rgba(0,0,0,.3);
+  transition:transform .1s;
+}
+.choice:active{transform:translateY(2px);}
+.choice:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+.choice.right{box-shadow:0 3px 0 var(--hatsu),0 0 0 3px var(--hatsu);}
+.choice.wrong{box-shadow:0 3px 0 var(--chun),0 0 0 3px var(--chun);opacity:.9;}
+.choice.dim{opacity:.45;pointer-events:none;}
+.choice:disabled{cursor:default;}
+/* next btn */
+.nextbtn{
+  display:none;margin:16px auto 0;background:var(--gold);color:var(--ink);
+  border:none;border-radius:999px;padding:11px 34px;
+  font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:15px;cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.35);
+}
+.nextbtn.show{display:block;}
+.nextbtn:focus-visible{outline:3px solid var(--ivory);outline-offset:2px;}
+/* summary */
+.summary{text-align:center;padding:10px 0;}
+.summary .big{font-family:'Shippori Mincho B1',serif;font-size:46px;font-weight:800;color:var(--gold);}
+.summary p{margin:10px 0 18px;font-size:14px;line-height:1.7;}
+/* kokoroe */
+.rule{display:flex;gap:14px;align-items:flex-start;padding:14px 4px;border-bottom:1px dashed rgba(232,200,121,.3);}
+.rule:last-child{border-bottom:none;}
+.rule .mark{
+  flex:0 0 auto;width:42px;height:56px;border-radius:6px;
+  background:linear-gradient(180deg,#fffdf6,var(--ivory-dim));
+  box-shadow:0 4px 0 var(--amber),0 6px 8px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Shippori Mincho B1',serif;font-weight:800;font-size:20px;color:var(--chun);
+}
+.rule h3{font-family:'Shippori Mincho B1',serif;font-size:16px;color:var(--gold);margin-bottom:4px;}
+.rule p{font-size:13.5px;line-height:1.75;color:rgba(247,242,228,.92);}
+.panel{display:none;}
+.panel.active{display:block;}
+.site-credit{
+  margin-top:24px;text-align:center;font-size:12px;
+  color:rgba(247,242,228,.62);
+}
+.site-credit a{
+  color:var(--gold);font-weight:700;text-decoration:none;
+  border-bottom:1px solid rgba(232,200,121,.45);
+}
+.site-credit a:hover{border-bottom-color:var(--gold);}
+.site-credit a:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:2px;}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>雀力ブートキャンプ</h1>
+  <div class="sub">何切る・押し引き・役。まずは「テンパイ判定」から。一瞬で見抜く目を作ろう。</div>
+</header>
+
+<div class="tabs" role="tablist">
+  <button class="tab active" data-panel="p-machi" role="tab">テンパイ判定</button>
+  <button class="tab" data-panel="p-nanikiru" role="tab">何切る</button>
+  <button class="tab" data-panel="p-handan" role="tab">押引き</button>
+  <button class="tab" data-panel="p-riichi" role="tab">リーチ</button>
+  <button class="tab" data-panel="p-yaku" role="tab">役</button>
+  <button class="tab" data-panel="p-yogo" role="tab">用語</button>
+  <button class="tab" data-panel="p-kokoroe" role="tab">心得</button>
+</div>
+
+<section id="p-machi" class="panel active"><div class="card" id="machi-card"></div></section>
+<section id="p-nanikiru" class="panel"><div class="card" id="nanikiru-card"></div></section>
+<section id="p-handan" class="panel"><div class="card" id="handan-card"></div></section>
+<section id="p-riichi" class="panel"><div class="card" id="riichi-card"></div></section>
+<section id="p-yaku" class="panel"><div class="card" id="yaku-card"></div></section>
+<section id="p-yogo" class="panel"><div class="card" id="yogo-card"></div></section>
+
+<section id="p-kokoroe" class="panel">
+  <div class="card">
+    <div class="rule"><div class="mark">壱</div><div><h3>先制テンパイは即リーチ</h3><p>役がなくてもリーチが役になる。先にテンパイしたら基本ノータイムでリーチ。迷う時間がもったいない。</p></div></div>
+    <div class="rule"><div class="mark">弐</div><div><h3>リャンメン至上主義</h3><p>待ちの広さは リャンメン(8枚) &gt; カンチャン(4枚) &gt; ペンチャン(4枚)。形を選べるなら必ず両面を残す。</p></div></div>
+    <div class="rule"><div class="mark">参</div><div><h3>浮き牌は端から切る</h3><p>切る優先順は「役にならん字牌 → 1・9 → 2・8」。逆に残す価値が高いのは3〜7の真ん中の牌。</p></div></div>
+    <div class="rule"><div class="mark">肆</div><div><h3>安い手でリーチが来たらベタオリ</h3><p>2向聴以下で打点も安いなら降り一択。切る順は 現物 → スジ → 字牌。振り込まんだけで順位は上がる。</p></div></div>
+    <div class="rule"><div class="mark">伍</div><div><h3>役は3つだけでええ</h3><p>「リーチ」「タンヤオ」「役牌」。この3つで実戦のあがりの大半はカバーできる。役牌2枚あったらポンして前に出るのもアリ。</p></div></div>
+    <div class="rule"><div class="mark">点</div><div><h3>点数は満貫だけ覚える</h3><p>満貫=子8000・親12000。あとは「1翻増えるごとに約2倍、満貫で頭打ちに近づく」のざっくり感覚でOK。リーチ+ツモ+裏が乗れば満貫はすぐそこ。</p></div></div>
+  </div>
+</section>
+<footer class="site-credit">
+  制作者 <a href="https://sites.google.com/view/hsbl-industrial-hp/home" target="_blank" rel="noopener noreferrer">ハシビロ工業</a>
+</footer>
+</div>
+
+<script>
+// ---------- 牌レンダリング ----------
+const KANJI = ['','一','二','三','四','五','六','七','八','九'];
+function tileHTML(code, extraCls='', tag='button'){
+  const honors = {E:'東',S:'南',W:'西',N:'北',F:'發',C:'中'};
+  let inner='', cls='';
+  if(code==='P'){ inner = '<span class="haku"></span>'; }
+  else if(honors[code]){
+    const c = code==='C'?'chun':(code==='F'?'hatsu':'');
+    inner = `<span class="honor ${c}">${honors[code]}</span>`;
+  } else {
+    const n = +code[0], s = code[1];
+    if(s==='m'){ cls='man'; inner=`<span class="num">${KANJI[n]}</span><span class="suit">萬</span>`; }
+    if(s==='p'){ cls='pin'; inner=`<span class="num">${n}</span><span class="suit">筒</span>`; }
+    if(s==='s'){ cls='sou'; inner=`<span class="num">${n}</span><span class="suit">索</span>`; }
+  }
+  return `<${tag} class="tile ${cls} ${extraCls}" data-code="${code}">${inner}</${tag}>`;
+}
+
+// ---------- 何切る ----------
+const NANIKIRU = [
+ { situ:'東1局・6巡目・誰もリーチなし',
+   hand:['2m','3m','4m','5m','6m','7m','3p','4p','5p','8p','8p','6s','7s','W'],
+   ans:['W'],
+   expl:'役に絡まへん字牌(西)は真っ先に処理。西切りで 234m・567m・345p・88p・67s の <b>5s/8s 待ちテンパイ</b>。即リーチや。' },
+ { situ:'東2局・7巡目・誰もリーチなし',
+   hand:['3m','4m','5m','5m','7m','3p','4p','5p','6p','7p','8s','8s','9s','9s'],
+   ans:['5m','7m'],
+   expl:'ブロックが1つ多い。一番弱い <b>57mのカンチャン</b> を払う(5m・7mどっちからでもOK)。リャンメンの67pと、トイツ2つ(88s/99s)のシャンポン受けを残すのが広い。' },
+ { situ:'東3局・5巡目・先制',
+   hand:['1m','2m','4m','5m','6m','6p','7p','8p','9p','9p','4s','5s','6s','9s'],
+   ans:['9s'],
+   expl:'浮いてる<b>9s</b>を切ればペンチャン<b>3m待ちのテンパイ</b>。愚形でも先制ならノータイム即リーチ。リーチ自体に1翻+裏ドラの価値がある。' },
+ { situ:'東1局・自分は南家・6巡目',
+   hand:['3m','4m','5m','9m','2p','3p','4p','5p','5s','6s','7s','8s','E','E'],
+   ans:['9m'],
+   expl:'4ブロック+東トイツ(場風で役牌!)。5つ目のブロック候補は浮き牌の 9m・2p(5p)・5s(8s)。浮き牌の価値は<b>真ん中ほど高い</b>ので、一番端の<b>9m</b>から切る。' },
+ { situ:'南2局・下家がリーチ! 西は下家の現物。自分は2向聴',
+   hand:['2m','4m','5m','6m','7m','7p','8p','8p','9p','3s','4s','5s','6s','W'],
+   ans:['W'],
+   expl:'2向聴の安い手でリーチを受けたら<b>ベタオリ一択</b>。切る順は 現物→スジ→字牌。今は現物の<b>西</b>から。攻めへん勇気が一番の上達や。' },
+];
+
+// ---------- 押し引きクイズ ----------
+const HANDAN = [
+ { q:'6巡目、自分が一番乗りで両面待ちテンパイ。役はリーチのみ。どうする?',
+   terms:[['先制','誰よりも先にテンパイすること'],['両面(リャンメン)','67みたいな形で両側(5か8)を待てる広い待ち']],
+   opts:['即リーチ','ダマで様子見','形が良くなるまで待つ'], ans:0,
+   expl:'先制リーチは最強の武器。1翻確定+裏ドラのチャンス+相手へのプレッシャー。迷ったらリーチや。' },
+ { q:'相手からリーチ。自分はテンパイまであと2枚必要(2向聴)で、打点も安い。どうする?',
+   terms:[['2向聴(リャンシャンテン)','有効牌があと2枚来たらテンパイ、の状態'],['ベタオリ','あがりを諦めて安全牌だけ切る守備']],
+   opts:['ベタオリする','全部押す','危険牌だけ止めて攻める'], ans:0,
+   expl:'2向聴×安手は降り一択。放銃(相手に振り込むこと)を1回減らすだけで成績は目に見えて変わる。' },
+ { q:'降りると決めた。最初に切るべき牌は?',
+   terms:[['現物','リーチした人が既に捨てた牌。ルール上100%ロンされへん']],
+   opts:['リーチ者の捨て牌と同じ牌(現物)','スジの牌','字牌'], ans:0,
+   expl:'現物は100%安全。<b>現物→スジ→字牌</b>の優先順位を体に叩き込むこと。' },
+ { q:'リーチした人が「4索」を捨てている。比較的安全なのはどれ?',
+   terms:[['スジ','4を捨てた人は1-4・4-7の両面待ちを持てへん(自分の捨て牌ではロンできんルールのため)。せやから1索・7索は両面には当たらん']],
+   opts:['1索(スジ)','5索','3索'], ans:0,
+   expl:'1索はスジで比較的安全。ただしカンチャンや単騎には当たることもあるので「絶対」ではない。真ん中の牌(4〜6)が一番危険、と覚えとこ。' },
+ { q:'手の中に「白」が2枚ある。他家が白を捨てた。どうする?',
+   terms:[['役牌','白・發・中(+自分の風・場の風)。3枚揃えるだけで1翻'],['ポン','他家の捨て牌をもらって同じ牌3枚の組を作る鳴き']],
+   opts:['ポンする','スルーして門前を貫く'], ans:0,
+   expl:'役牌ポンは「役の確定+スピードUP」の一石二鳥。配牌が普通以下なら鳴いてサクッとあがるのが強い。' },
+ { q:'自分が前に捨てた牌が、いま自分の当たり牌(待ち牌)になってしまった。あがれる?',
+   terms:[['フリテン','自分の捨て牌に待ち牌が含まれてる状態']],
+   opts:['ロンは不可、ツモならOK','ロンもツモも不可','どっちもOK'], ans:0,
+   expl:'フリテンのルール。他家からはロンできへんけど、自分でツモればあがれる。待ちが複数あるとき、1種でも自分で捨ててたら全部ロン不可になるので注意。' },
+ { q:'子の満貫は何点?',
+   terms:[['満貫(マンガン)','だいたい5翻分の点数。打点の基準になる単位']],
+   opts:['8000点','5200点','12000点'], ans:0,
+   expl:'満貫=子8000・親12000。まずこれだけ覚えたら点数感覚は十分戦える。' },
+];
+
+// ---------- 役クイズ ----------
+const YAKU = [
+ { q:'2〜8の数牌だけで手を作ると?', opts:['タンヤオ','ピンフ','チャンタ','ホンイツ'], ans:0,
+   expl:'断幺九(タンヤオ)・1翻。鳴いてもOK(クイタン)。最も使う役のひとつ。' },
+ { q:'順子のみ+雀頭が役牌以外+両面待ち+門前。この役は?', opts:['ピンフ','タンヤオ','イーペーコー','ツモ'], ans:0,
+   expl:'平和(ピンフ)・1翻。リーチ+ピンフ+タンヤオは黄金コンビ。' },
+ { q:'白・發・中いずれかを3枚集めると?', opts:['役牌','小三元','トイトイ','ホンイツ'], ans:0,
+   expl:'役牌(ヤクハイ)・1翻。自風・場風の刻子も同じく1翻。鳴いてもOKでスピードが出る。' },
+ { q:'同じ対子(ペア)を7組集める役は?', opts:['七対子','トイトイ','二盃口','国士無双'], ans:0,
+   expl:'七対子(チートイツ)・2翻25符。門前限定。トイツが多い配牌のときの選択肢。' },
+ { q:'同じ色で123・456・789と揃えると?', opts:['一気通貫','三色同順','清一色','純チャン'], ans:0,
+   expl:'一気通貫(イッツー)・門前2翻(鳴くと1翻)。' },
+ { q:'萬子・筒子・索子で同じ数字の順子(例: 456)を揃えると?', opts:['三色同順','一気通貫','三色同刻','三暗刻'], ans:0,
+   expl:'三色同順(サンショク)・門前2翻(鳴くと1翻)。打点を伸ばしたいときに狙う。' },
+ { q:'一色の数牌+字牌で構成された手は?', opts:['混一色','清一色','字一色','緑一色'], ans:0,
+   expl:'混一色(ホンイツ)・門前3翻(鳴くと2翻)。役牌と組み合わせると満貫が見える。' },
+ { q:'字牌なし、一色の数牌のみで構成された手は?', opts:['清一色','混一色','緑一色','九蓮宝燈'], ans:0,
+   expl:'清一色(チンイツ)・門前6翻(鳴くと5翻)。決まればほぼ跳満。' },
+ { q:'4面子すべてを刻子(同じ牌3枚)で揃えると?', opts:['対々和','三暗刻','四暗刻','七対子'], ans:0,
+   expl:'対々和(トイトイ)・2翻。ポンしまくって作れるのでホンイツや役牌と相性◎。' },
+ { q:'門前のまま自分でツモあがりすると付く役は?', opts:['門前清自摸和','ハイテイ','リンシャン','ダブリー'], ans:0,
+   expl:'メンゼンツモ・1翻。リーチ+ツモ+裏1枚で3900〜満貫が見えてくる。' },
+];
+
+// ---------- リーチ見極めクイズ ----------
+const RIICHI = [
+ { situ:'東1局・6巡目(序盤)・誰もリーチしてない',
+   q:'自分が一番乗りでテンパイ! ただし役はリーチくらいしか付かへん安い手。どうする?',
+   hand:['1m','1m','1m','4m','5m','6m','6p','7p','8p','3s','3s','6s','7s'],
+   note:'待ち: 5索・8索(両面・残り8枚)',
+   terms:[['先制','誰よりも先にテンパイすること'],['両面(リャンメン)','67みたいな形で両側(5か8)を待てる広い待ち'],['リーチのみ','役がリーチだけ=1翻=安い']],
+   opts:['即リーチ','ダマで様子見','打点が付くまでリーチしない'], ans:0,
+   expl:'安くても先制+両面なら<b>即リーチ</b>。リーチ1翻+ツモ+裏ドラで打点は勝手に育つ。「安いからダマ」が一番もったいない。' },
+ { situ:'東2局・5巡目(序盤)・誰もリーチしてない',
+   q:'先制テンパイやけど、待ちは真ん中1種類だけの「カンチャン」。どうする?',
+   hand:['2m','3m','4m','6m','7m','8m','3p','4p','5p','9p','9p','4s','6s'],
+   note:'待ち: 5索のみ(カンチャン・残り4枚)',
+   terms:[['カンチャン','4_6みたいに間の1種だけを待つ狭い形(愚形)'],['手替わり','ツモで待ちがもっと良い形に変わること']],
+   opts:['それでも即リーチ','良形に変わるまでダマ','リーチせず手を崩して回す'], ans:0,
+   expl:'序盤〜中盤の先制なら<b>愚形でも即リーチ</b>が基本。手替わりを待ってる間に相手に追いつかれる方が損。先制の圧力は形の悪さを補って余りある。' },
+ { situ:'オーラス・自分がトップ目・あがれば優勝',
+   q:'タンヤオ+ドラ1でテンパイ。リーチしなくても役があるからあがれる。どうする?',
+   hand:['2m','3m','4m','5m','6m','7m','3p','4p','5p','5s','5s','6s','7s'],
+   note:'ドラ: 5萬 / 待ち: 5索・8索(両面)',
+   terms:[['トップ目','今1位ってこと'],['ダマ(ヤミテン)','テンパイしてもリーチせず隠して構えること'],['タンヤオ','2〜8だけの手。役があるからダマでもロンできる']],
+   opts:['ダマでサッとあがる','リーチで打点上乗せ','あがらず流局を待つ'], ans:0,
+   expl:'あがれば優勝なら<b>ダマで出あがりしやすく</b>するのが正解。リーチすると全員警戒して牌が出てこんくなる。点数はもう要らん、欲しいのはあがりだけ。状況で打ち方は変わるんや。' },
+ { situ:'南3局・残りツモあと2回の終盤',
+   q:'やっとテンパイ。でも役なし+カンチャン待ち。どうする?',
+   hand:['1m','2m','3m','7m','8m','9m','4p','5p','6p','9s','9s','1s','3s'],
+   note:'待ち: 2索のみ(カンチャン・残り4枚)',
+   terms:[['形式テンパイ','役がなくてもテンパイしてれば、流局時にノーテンの人から罰符をもらえる'],['流局','誰もあがらず山が尽きること']],
+   opts:['リーチせず形式テンパイ維持','即リーチ','手牌を崩してオリる'], ans:0,
+   expl:'残り2回ではほぼあがれへん。リーチは1000点棒を払って「もうオリれへん」縛りを背負うだけ。<b>静かにテンパイを保って</b>流局時の罰符(1000〜3000点)をもらう側に回るのが得。' },
+ { situ:'東3局・8巡目・他家が先にリーチ!',
+   q:'直後に自分もテンパイ。両面待ちで、タンヤオ+ピンフ+ドラ2の高い手。どうする?',
+   hand:['3m','4m','5m','4p','5p','6p','6p','7p','8p','8s','8s','6s','7s'],
+   note:'ドラ: 8索 → ドラ2 / 待ち: 5索・8索(両面)',
+   terms:[['追っかけリーチ','相手のリーチの後から自分もリーチすること'],['良形','両面みたいな広い待ちのこと']],
+   opts:['追っかけリーチで勝負','ダマで回す','即ベタオリ'], ans:0,
+   expl:'<b>良形+高打点なら追っかけリーチは五分以上の勝負</b>。これで引いてたら勝てへん。合言葉は「良形なら押す、愚形なら引く」。' },
+ { situ:'南1局・他家が先にリーチ!',
+   q:'自分もテンパイしたけど、役なし+カンチャン待ちの安い手。どうする?',
+   hand:['2m','3m','4m','6m','7m','8m','2p','3p','4p','9p','9p','6s','8s'],
+   note:'待ち: 7索のみ(カンチャン・残り4枚)',
+   terms:[['後手','相手より遅れてテンパイすること'],['現物','リーチした人が捨てた牌。絶対ロンされへん安全牌']],
+   opts:['無理せず現物を切って回る・オリる','意地で追っかけリーチ','ツモ切りで全部押す'], ans:0,
+   expl:'<b>愚形・安手・後手の3拍子</b>が揃ったら引く。押してええのは「広い待ち」か「高い打点」のどっちかがある時だけ。さっきの問題と見比べてみ?' },
+ { situ:'東4局・9巡目・リーチするか迷い中',
+   q:'8索の単騎待ちでテンパイ。ふと捨て牌を見ると…場に8索がもう3枚見えてる! どうする?',
+   hand:['2m','3m','4m','5m','6m','7m','3p','4p','5p','6p','7p','8p','8s'],
+   note:'待ち: 8索の単騎 → 残りはあと1枚だけ!',
+   terms:[['単騎(タンキ)','最後の雀頭1枚を待つ形。待ちは最大3枚'],['山に生きてる','まだ誰も使ってない=ツモれる可能性がある牌のこと']],
+   opts:['待ちの残り枚数を数えて、待ち替えを検討する','枚数は気にせず即リーチ','単騎は必ず強いのでリーチ'], ans:0,
+   expl:'リーチ前の儀式は<b>「待ちが場に何枚残ってるか数える」</b>。残り1枚の待ちでリーチは無謀。1巡待って別の牌の単騎に替えるとか、選択肢を持とう。' },
+ { q:'ここから知識問題。ダマ(リーチしない)の一番のメリットは?',
+   terms:[['ダマ(ヤミテン)','テンパイしてるのにあえてリーチしないこと']],
+   opts:['警戒されず出あがりしやすい+待ちを変えられる+いつでもオリれる','点数が2倍になる','ツモられなくなる'], ans:0,
+   expl:'ダマは「気配を消せる」「手替わり自由」「いつでもオリれる」の三拍子。リーチはこの全部を捨てる代わりに打点と圧力を買う。<b>この交換が割に合うかどうか</b>で見極めるんや。' },
+ { q:'逆に、リーチの一番のデメリットは?',
+   opts:['ツモ切りしかできず、オリられなくなる','役がなくなる','点数が下がる'], ans:0,
+   expl:'リーチ後は超危険牌が来てもツモ切りするしかない。つまり<b>リーチ=「この手で最後まで勝負します」宣言</b>。降りる権利を捨てる覚悟とセットや。' },
+];
+
+// ---------- 用語クイズ ----------
+const YOGO = [
+ { q:'「テンパイ」の意味は?', opts:['あと1枚であがれる状態','あがった瞬間のこと','配牌が良いこと','役がない状態'], ans:0,
+   expl:'あと1枚来ればあがり、の状態。テンパイしてないことは「ノーテン」と言う。' },
+ { q:'「1シャンテン(一向聴)」の意味は?', opts:['あと1枚有効牌が来ればテンパイ','あと1枚であがり','1翻しかない手','1巡目のこと'], ans:0,
+   expl:'テンパイまでの距離を表す数字。2シャンテン→1シャンテン→テンパイ→あがり、と進む。' },
+ { q:'「ターツ」とは?', opts:['あと1枚で面子になる2枚組(67mなど)','同じ牌2枚のペア','完成した3枚組','字牌のこと'], ans:0,
+   expl:'67m(リャンメン)、57m(カンチャン)、12m(ペンチャン)みたいな「面子の素」。トイツ(対子)は同じ牌2枚のペアのこと。' },
+ { q:'「現物(げんぶつ)」とは?', opts:['リーチ者が既に捨てた牌','ドラのこと','王牌のこと','手牌の中の字牌'], ans:0,
+   expl:'リーチ者の捨て牌にある牌はフリテンのルールで絶対ロンされへん。降りるときの命綱。' },
+ { q:'「スジ」とは?(例: 相手が4mを捨てている)', opts:['1mと7mが比較的安全になる読み筋','4mの隣の牌が危険という読み','同じ色の牌は全部安全','字牌が安全という読み'], ans:0,
+   expl:'4を捨てた人は1-4・4-7の両面待ちを持てへん(フリテン)。せやから1と7は両面に当たらん=比較的安全。ただしカンチャンや単騎には当たるので過信は禁物。' },
+ { q:'「カベ(壁)」とは?', opts:['ある牌が4枚見えてると、その牌を使う待ちが消える読み','点棒が少ない状態','鳴けない状態','捨て牌が多いこと'], ans:0,
+   expl:'例えば5sが場に4枚見えてたら、相手は45sや56sの形を持てへん。つまり3s-6s・4s-7s待ちの可能性が減る。中級への入口の読みや。' },
+ { q:'「ダマ(ヤミテン)」とは?', opts:['テンパイしてるのにリーチしないこと','黙ってオリること','鳴かずに進めること','点数を申告しないこと'], ans:0,
+   expl:'リーチせずテンパイを隠して構えること。役がないとダマではロンあがりできへんので注意(ツモのみは門前ならメンゼンツモが付く)。' },
+ { q:'「フリテン」とは?', opts:['自分の捨て牌に待ち牌が含まれる状態','リーチ後にツモ切りすること','鳴いた後の手','流局のこと'], ans:0,
+   expl:'この状態ではロン不可(ツモは可)。待ちのどれか1種でも自分で捨ててたら全部ロンできへんのがポイント。' },
+ { q:'「ベタオリ」とは?', opts:['あがりを完全に諦めて安全牌だけ切ること','ゆっくり攻めること','安い手であがること','席を立つこと'], ans:0,
+   expl:'手牌を崩してでも現物・安全牌を切り続ける守備。中途半端に攻めながら降りる「回し打ち」より、初心者はベタオリを徹底する方が成績が安定する。' },
+ { q:'「鳴き(副露)」に含まれるのは?', opts:['ポン・チー・カン','リーチ・ツモ','ロン・ダマ','パス・スルー'], ans:0,
+   expl:'他家の捨て牌をもらって面子を作る行為。鳴くと門前限定の役(リーチ・ピンフ・メンゼンツモなど)が使えなくなるのに注意。チーは左隣(上家)からだけ。' },
+ { q:'「単騎(タンキ)待ち」とは?', opts:['雀頭になる1枚を待つ形','両面で待つ形','2種類の牌を待つ形','字牌だけの待ち'], ans:0,
+   expl:'4面子完成+雀頭の片割れ1枚で待つ形。待ちは最大3枚と狭いけど、字牌単騎は意外と出あがりしやすい。' },
+ { q:'「供託(きょうたく)」とは?', opts:['リーチ棒など場に出された点棒。次にあがった人がもらう','親に払う点数','流局時の罰符','ゲーム開始時の持ち点'], ans:0,
+   expl:'リーチの1000点棒は場に置かれ、次のあがり者が総取り。供託が積まれてる場では、安手でもサッとあがる価値が上がる。' },
+];
+
+
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+function makeNanikiru(el){
+  let idx=0, score=0;
+  function render(){
+    if(idx>=NANIKIRU.length){ return renderSummary(el,score,NANIKIRU.length,'牌効率の感覚、ええ感じや。','次は「押し引き」タブへ。',()=>{idx=0;score=0;render();}); }
+    const p = NANIKIRU[idx];
+    el.innerHTML = `
+      <div class="progress"><span>第${idx+1}問 / 全${NANIKIRU.length}問</span><span>正解 ${score}</span></div>
+      <span class="situ">${p.situ}</span>
+      <div class="qtext">何を切る? 牌をタップ!</div>
+      <div class="hand">${p.hand.map(c=>tileHTML(c)).join('')}</div>
+      <div class="result" id="res"></div>
+      <button class="nextbtn" id="next">次の問題へ</button>`;
+    const tiles=[...el.querySelectorAll('.tile')];
+    tiles.forEach(t=>t.addEventListener('click',()=>{
+      const ok = p.ans.includes(t.dataset.code);
+      if(ok) score++;
+      tiles.forEach(x=>{
+        x.disabled=true; x.classList.add('static');
+        if(x===t) x.classList.add(ok?'picked-right':'picked-wrong');
+        else if(!ok && p.ans.includes(x.dataset.code)) x.classList.add('picked-right');
+        else x.classList.add('dim');
+      });
+      const res=el.querySelector('#res');
+      res.className='result show '+(ok?'ok':'ng');
+      res.innerHTML=`<div class="verdict">${ok?'正解!':'惜しい!'}</div>${p.expl}`;
+      el.querySelector('#next').classList.add('show');
+    },{once:true}));
+    el.querySelector('#next').addEventListener('click',()=>{idx++;render();});
+  }
+  render();
+}
+
+function makeChoiceQuiz(el, DATA, doneMsg){
+  let idx=0, score=0;
+  const data = DATA.map(q=>{
+    const order = shuffle(q.opts.map((_,i)=>i));
+    return {...q, order};
+  });
+  function render(){
+    if(idx>=data.length){ return renderSummary(el,score,data.length,doneMsg[0],doneMsg[1],()=>{idx=0;score=0;render();}); }
+    const p=data[idx];
+    el.innerHTML = `
+      <div class="progress"><span>第${idx+1}問 / 全${data.length}問</span><span>正解 ${score}</span></div>
+      ${p.situ?`<span class="situ">${p.situ}</span>`:''}
+      <div class="qtext">${p.q}</div>
+      ${p.hand?`<div class="hand minihand">${p.hand.map(c=>tileHTML(c,'static','span')).join('')}</div>`:''}
+      ${p.note?`<div class="note">${p.note}</div>`:''}
+      ${p.terms?`<div class="terms"><span class="tlabel">用語メモ</span>${p.terms.map(t=>`<b>${t[0]}</b> = ${t[1]}`).join('<br>')}</div>`:''}
+      <div class="choices">${p.order.map(i=>`<button class="choice" data-i="${i}">${p.opts[i]}</button>`).join('')}</div>
+      <div class="result" id="res"></div>
+      <button class="nextbtn" id="next">次の問題へ</button>`;
+    const btns=[...el.querySelectorAll('.choice')];
+    btns.forEach(b=>b.addEventListener('click',()=>{
+      const ok = +b.dataset.i===p.ans;
+      if(ok) score++;
+      btns.forEach(x=>{
+        x.disabled=true;
+        if(+x.dataset.i===p.ans) x.classList.add('right');
+        else if(x===b) x.classList.add('wrong');
+        else x.classList.add('dim');
+      });
+      const res=el.querySelector('#res');
+      res.className='result show '+(ok?'ok':'ng');
+      res.innerHTML=`<div class="verdict">${ok?'正解!':'不正解…'}</div>${p.expl}`;
+      el.querySelector('#next').classList.add('show');
+    },{once:true}));
+    el.querySelector('#next').addEventListener('click',()=>{idx++;render();});
+  }
+  render();
+}
+
+function renderSummary(el,score,total,msgGood,msgNext,restart){
+  const rate = score/total;
+  const grade = rate===1?'免許皆伝':rate>=.8?'雀士':rate>=.5?'見習い':'修行中';
+  el.innerHTML = `
+    <div class="summary">
+      <div class="progress" style="justify-content:center">結果発表</div>
+      <div class="big">${score} / ${total}</div>
+      <div style="font-family:'Shippori Mincho B1',serif;font-size:20px;color:var(--gold);margin-top:4px;">「${grade}」</div>
+      <p>${rate>=.8?msgGood:'間違えた問題の解説をもう一周読むのが一番効くで。'}<br>${msgNext}</p>
+      <button class="nextbtn show" id="restart">もう一周する</button>
+    </div>`;
+  el.querySelector('#restart').addEventListener('click',restart);
+}
+
+// ---------- テンパイ判定モード(ランダム生成 + 本物のシャンテン計算) ----------
+const SUITS=['m','p','s'], HONORS=['E','S','W','N','P','F','C'];
+const ALL_TILES=[]; for(const s of SUITS) for(let n=1;n<=9;n++) ALL_TILES.push(n+s); for(const h of HONORS) ALL_TILES.push(h);
+
+function toCounts(hand){
+  const m=Array(9).fill(0),p=Array(9).fill(0),s=Array(9).fill(0),z=Array(7).fill(0);
+  const map={m,p,s};
+  for(const t of hand){ if(t.length===2)map[t[1]][+t[0]-1]++; else z[HONORS.indexOf(t)]++; }
+  return [m,p,s,z];
+}
+function suitParse(c){
+  const set=new Set();
+  function rec(i,melds,partials,head){
+    while(i<9&&c[i]===0)i++;
+    if(i>=9){ set.add(melds+','+partials+','+head); return; }
+    if(c[i]>=3){c[i]-=3;rec(i,melds+1,partials,head);c[i]+=3;}
+    if(i<=6&&c[i]&&c[i+1]&&c[i+2]){c[i]--;c[i+1]--;c[i+2]--;rec(i,melds+1,partials,head);c[i]++;c[i+1]++;c[i+2]++;}
+    if(c[i]>=2){ c[i]-=2; rec(i,melds,partials+1,head); if(head===0)rec(i,melds,partials,1); c[i]+=2; }
+    if(i<=7&&c[i]&&c[i+1]){c[i]--;c[i+1]--;rec(i,melds,partials+1,head);c[i]++;c[i+1]++;}
+    if(i<=6&&c[i]&&c[i+2]){c[i]--;c[i+2]--;rec(i,melds,partials+1,head);c[i]++;c[i+2]++;}
+    c[i]--;rec(i,melds,partials,head);c[i]++;
+  }
+  rec(0,0,0,0);
+  return [...set].map(x=>x.split(',').map(Number));
+}
+function zParse(z){ let melds=0,pairs=0; for(const v of z){if(v>=3)melds++;else if(v===2)pairs++;}
+  const out=[[melds,pairs,0]]; if(pairs>=1)out.push([melds,pairs-1,1]); return out; }
+function standardShanten(c){
+  const cm=suitParse(c[0]),cp=suitParse(c[1]),cs=suitParse(c[2]),cz=zParse(c[3]);
+  let best=8;
+  for(const A of cm)for(const B of cp)for(const C of cs)for(const D of cz){
+    const head=A[2]+B[2]+C[2]+D[2]; if(head>1)continue;
+    const melds=A[0]+B[0]+C[0]+D[0]; const partials=A[1]+B[1]+C[1]+D[1];
+    const need=4-melds; const usable=Math.min(partials,need);
+    const sh=need*2-usable-head; if(sh<best)best=sh;
+  }
+  return best;
+}
+function chiitoiShanten(c){ const all=c.flat(); let pairs=0,kinds=0;
+  for(const v of all){if(v>=1)kinds++;if(v>=2)pairs++;} return 6-pairs+Math.max(0,7-kinds); }
+function shanten(hand){ const c=toCounts(hand); return Math.min(standardShanten(c),chiitoiShanten(c)); }
+function isTenpai(hand){ return shanten(hand)===0; }
+function calcWaits(hand){
+  if(!isTenpai(hand))return[];
+  const have={}; hand.forEach(t=>have[t]=(have[t]||0)+1);
+  const w=[];
+  for(const t of ALL_TILES){ if((have[t]||0)>=4)continue; if(shanten(hand.concat(t))===-1)w.push(t); }
+  return w;
+}
+function sortHand(hand){
+  const order=t=>{ if(t.length===2) return SUITS.indexOf(t[1])*10+ (+t[0]); return 30+HONORS.indexOf(t); };
+  return [...hand].sort((a,b)=>order(a)-order(b));
+}
+
+// 14枚(あがり形)を 4面子+1雀頭 に分解。{groups:[[..],..], headIdx} を返す。失敗時null
+function decomposeWin(hand14){
+  const c=toCounts(hand14);
+  const groups=[]; let headIdx=-1;
+  // バックトラックで 雀頭1 + 面子4 を取り切れるか
+  function rec(suitArr){
+    // suitArr: [m,p,s,z] のcounts、先頭の非0牌から面子/雀頭を確定
+    function firstNon0(){
+      for(let si=0;si<3;si++){ for(let n=0;n<9;n++) if(suitArr[si][n]>0) return [si,n]; }
+      for(let h=0;h<7;h++) if(suitArr[3][h]>0) return [3,h];
+      return null;
+    }
+    const f=firstNon0();
+    if(!f){ return groups.length===5; } // 雀頭1+面子4=5ブロック
+    const [si,n]=f;
+    const arr=suitArr[si];
+    const code = si<3 ? (n+1)+SUITS[si] : HONORS[n];
+    // 刻子
+    if(arr[n]>=3){ arr[n]-=3; groups.push([code,code,code]); if(rec(suitArr))return true; groups.pop(); arr[n]+=3; }
+    // 順子
+    if(si<3 && n<=6 && arr[n]&&arr[n+1]&&arr[n+2]){
+      arr[n]--;arr[n+1]--;arr[n+2]--;
+      groups.push([(n+1)+SUITS[si],(n+2)+SUITS[si],(n+3)+SUITS[si]]);
+      if(rec(suitArr))return true; groups.pop(); arr[n]++;arr[n+1]++;arr[n+2]++;
+    }
+    // 雀頭(まだ取ってなければ)
+    if(arr[n]>=2 && headIdx===-1){
+      arr[n]-=2; const gi=groups.length; groups.push([code,code]); headIdx=gi;
+      if(rec(suitArr))return true; groups.pop(); headIdx=-1; arr[n]+=2;
+    }
+    return false;
+  }
+  if(rec(c)) return {groups:groups.slice(), headIdx};
+  return null;
+}
+
+// ランダム手牌生成: テンパイ寄りに偏らせつつ、たまにノーテンも出す
+function randInt(n){ return Math.floor(Math.random()*n); }
+function genHand(){
+  const pool={}; ALL_TILES.forEach(t=>pool[t]=4);
+  const draw=t=>{ pool[t]--; return t; };
+  const canUse=(t,k=1)=>pool[t]>=k;
+  // まず「完成形(あがり14枚)」に近い13枚テンパイを組む
+  function buildTenpaiBase(){
+    const hand=[];
+    // 雀頭
+    for(let g=0;g<40;g++){ const t = Math.random()<0.9 ? (2+randInt(7))+SUITS[randInt(3)] : ALL_TILES[randInt(ALL_TILES.length)]; if(canUse(t,2)){draw(t);draw(t);hand.push(t,t);break;} }
+    // 完成面子を3つ
+    let placed=0,guard=0;
+    while(placed<3 && guard<80){ guard++;
+      if(Math.random()<0.93){ const s=SUITS[randInt(3)],n=1+randInt(7); const ts=[n+s,(n+1)+s,(n+2)+s];
+        if(ts.every(t=>canUse(t))){ts.forEach(draw);hand.push(...ts);placed++;} }
+      else { const t=ALL_TILES[randInt(ALL_TILES.length)]; if(canUse(t,3)){for(let k=0;k<3;k++)draw(t);hand.push(t,t,t);placed++;} }
+    }
+    // 最後の塔子(両面/カンチャン/ペンチャン/対子) = 待ち部分
+    let tatsuOK=false;
+    for(let g=0;g<60 && !tatsuOK;g++){
+      const r=Math.random();
+      if(r<0.62){ const s=SUITS[randInt(3)],n=1+randInt(8); if(canUse(n+s)&&canUse((n+1)+s)){draw(n+s);draw((n+1)+s);hand.push(n+s,(n+1)+s);tatsuOK=true;} }
+      else if(r<0.9){ const s=SUITS[randInt(3)],n=1+randInt(7); if(canUse(n+s)&&canUse((n+2)+s)){draw(n+s);draw((n+2)+s);hand.push(n+s,(n+2)+s);tatsuOK=true;} }
+      else { const t=ALL_TILES[randInt(ALL_TILES.length)]; if(canUse(t,2)){draw(t);draw(t);hand.push(t,t);tatsuOK=true;} }
+    }
+    return hand.length===13?hand:null;
+  }
+  const wantTenpai=Math.random()<0.5;
+  let hand=buildTenpaiBase();
+  if(!hand){ // フォールバック: 完全ランダム
+    hand=[]; while(hand.length<13){ const t=ALL_TILES[randInt(ALL_TILES.length)]; if(canUse(t)){draw(t);hand.push(t);} }
+    return sortHand(hand);
+  }
+  if(!wantTenpai){
+    // テンパイ手を1枚だけ、手に無い孤立牌に差し替えてノーテン化(被り回避・自然な崩し)
+    const inHand=new Set(hand);
+    for(let g=0;g<60;g++){
+      const idx=randInt(13);
+      // 手に無く、隣牌とも繋がりにくい牌を優先(完全ランダム→未使用優先で2回試す)
+      let repl=ALL_TILES[randInt(ALL_TILES.length)];
+      if(g<30 && inHand.has(repl)) continue;       // 前半は被り牌をスキップ
+      if(!canUse(repl)) continue;
+      const trial=hand.slice(); const removed=trial[idx]; trial[idx]=repl;
+      if(!isTenpai(trial)){ pool[removed]++; pool[repl]--; hand=trial; break; }
+    }
+  }
+  // 後処理: 同じ牌が4枚並ぶのは練習にならんので、テンパイ判定を保ったまま1枚を別牌に振替
+  function fixQuads(h){
+    let changed=true, loop=0;
+    while(changed && loop<20){
+      changed=false; loop++;
+      const c={}; h.forEach(t=>c[t]=(c[t]||0)+1);
+      const quad=Object.keys(c).find(k=>c[k]>=4);
+      if(!quad) break;
+      const wasTenpai=isTenpai(h);
+      const i=h.indexOf(quad);
+      for(let g=0;g<60;g++){
+        const repl=ALL_TILES[randInt(ALL_TILES.length)];
+        if((c[repl]||0)>=3) continue;     // 振替先も3枚以上は避ける
+        if(repl===quad) continue;
+        if(!canUse(repl)) continue;
+        const trial=h.slice(); trial[i]=repl;
+        if(isTenpai(trial)===wasTenpai){ pool[quad]++; pool[repl]--; h=trial; changed=true; break; }
+      }
+    }
+    return h;
+  }
+  hand=fixQuads(hand);
+  return sortHand(hand);
+}
+function winTileName(code){
+  const KJ=['','一','二','三','四','五','六','七','八','九'];
+  const H={E:'東',S:'南',W:'西',N:'北',P:'白',F:'發',C:'中'};
+  if(H[code]) return H[code];
+  const n=+code[0], s={m:'萬',p:'筒',s:'索'}[code[1]];
+  return n+s;
+}
+function makeMachi(el){
+  let streak=0, total=0;
+  function newQ(){
+    const hand=genHand();
+    const tenpai=isTenpai(hand);
+    const waits=tenpai?calcWaits(hand):[];
+    el.innerHTML = `
+      <div class="progress"><span>第${total+1}問</span><span>連続正解 ${streak}</span></div>
+      <div class="qtext">この手はテンパイ? それともノーテン?</div>
+      <div class="hand minihand">${hand.map(c=>tileHTML(c,'static','span')).join('')}</div>
+      <div class="choices">
+        <button class="choice" data-v="1">テンパイ(あと1枚であがれる)</button>
+        <button class="choice" data-v="0">ノーテン(まだ届いてない)</button>
+      </div>
+      <div class="result" id="res"></div>
+      <button class="nextbtn" id="next">次の手牌へ</button>`;
+    const btns=[...el.querySelectorAll('.choice')];
+    btns.forEach(b=>b.addEventListener('click',()=>{
+      const picked = b.dataset.v==='1';
+      const ok = picked===tenpai;
+      total++; if(ok)streak++; else streak=0;
+      btns.forEach(x=>{
+        x.disabled=true;
+        const isCorrectBtn=(x.dataset.v==='1')===tenpai;
+        if(isCorrectBtn) x.classList.add('right');
+        else if(x===b) x.classList.add('wrong');
+        else x.classList.add('dim');
+      });
+      const res=el.querySelector('#res');
+      res.className='result show '+(ok?'ok':'ng');
+      let body;
+      if(tenpai){
+        body=`これは<b>テンパイ</b>。待ち牌は ${waits.length}種類:`
+          +`<div class="waitline">${waits.map(t=>tileHTML(t,'mini static ghost','span')).join('')}</div>`
+          +(waits.length>=3?`<div style="margin:2px 0 10px;color:rgba(247,242,228,.85)">これが<b>多面待ち</b>。見抜けると一気に強なるで。</div>`:'')
+          +`<div style="font-size:12.5px;color:var(--gold);font-weight:700;margin:10px 0 2px;letter-spacing:.04em;">▼ あがり形(その牌が来たら、こう完成する)</div>`;
+        // 各待ち牌ごとのあがり形を面子分解で表示
+        for(const wt of waits){
+          const win=hand.concat(wt);
+          const d=decomposeWin(win);
+          let formHTML;
+          if(d){
+            // 雀頭を末尾に並べ替えて見やすく
+            const order=d.groups.map((g,i)=>({g,head:i===d.headIdx}));
+            order.sort((a,b)=>(a.head?1:0)-(b.head?1:0));
+            formHTML = order.map(o=>{
+              const isWin=o.g.includes(wt) && !o._used;
+              return `<span class="grp${o.head?' headgrp':''}">`
+                + o.g.map(t=>tileHTML(t, 'mini static'+(t===wt?' winhi':''),'span')).join('')
+                + `</span>`;
+            }).join('');
+          } else {
+            // 七対子: 7対子をそのまま2枚ずつ表示
+            const cc={}; win.forEach(t=>cc[t]=(cc[t]||0)+1);
+            const pairs=Object.keys(cc).filter(k=>cc[k]===2);
+            formHTML = pairs.map(t=>`<span class="grp">`+tileHTML(t,'mini static'+(t===wt?' winhi':''),'span')+tileHTML(t,'mini static'+(t===wt?' winhi':''),'span')+`</span>`).join('') + `<span class="grp-label" style="width:100%">七対子(チートイツ)</span>`;
+          }
+          body += `<div class="winrow"><span class="wintile-label">${winTileName(wt)}で</span><div class="decomp winform">${formHTML}</div></div>`;
+        }
+      } else {
+        const sh=shanten(hand);
+        body=`これは<b>ノーテン</b>(あと${sh}枚でテンパイ=${sh}シャンテン)。あがりには「4面子+1雀頭」が要る。どのブロックが未完成か探してみ。`;
+      }
+      res.innerHTML=`<div class="verdict">${ok?'正解!':'不正解…'}</div>${body}`;
+      el.querySelector('#next').classList.add('show');
+    },{once:true}));
+    el.querySelector('#next').addEventListener('click',newQ);
+  }
+  newQ();
+}
+
+// ---------- タブ ----------
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.panel).classList.add('active');
+}));
+
+makeMachi(document.getElementById('machi-card'));
+makeNanikiru(document.getElementById('nanikiru-card'));
+makeChoiceQuiz(document.getElementById('handan-card'), HANDAN, ['押し引きの判断、もう初心者ちゃうで。','次は「リーチ」タブで見極め力を鍛えよう。']);
+makeChoiceQuiz(document.getElementById('riichi-card'), RIICHI, ['リーチ判断は完璧や。卓で迷わんで済むな。','「役」タブも仕上げよか。']);
+makeChoiceQuiz(document.getElementById('yaku-card'), YAKU, ['役はバッチリ。あとは実戦あるのみ。','「用語」タブで卓の会話についていけるようにしよう。']);
+makeChoiceQuiz(document.getElementById('yogo-card'), YOGO, ['用語マスターや。もう卓の会話で置いていかれへん。','最後に「心得」タブを読んで卓につこう。']);
+</script>
+</body>
+</html>
