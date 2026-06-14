@@ -246,30 +246,6 @@ function tileHTML(code, extraCls='', tag='button'){
   return `<${tag} class="tile ${cls} ${extraCls}" data-code="${code}">${inner}</${tag}>`;
 }
 
-// ---------- 何切る ----------
-const NANIKIRU = [
- { situ:'東1局・6巡目・誰もリーチなし',
-   hand:['2m','3m','4m','5m','6m','7m','3p','4p','5p','8p','8p','6s','7s','W'],
-   ans:['W'],
-   expl:'役に絡まへん字牌(西)は真っ先に処理。西切りで 234m・567m・345p・88p・67s の <b>5s/8s 待ちテンパイ</b>。即リーチや。' },
- { situ:'東2局・7巡目・誰もリーチなし',
-   hand:['3m','4m','5m','5m','7m','3p','4p','5p','6p','7p','8s','8s','9s','9s'],
-   ans:['5m','7m'],
-   expl:'ブロックが1つ多い。一番弱い <b>57mのカンチャン</b> を払う(5m・7mどっちからでもOK)。リャンメンの67pと、トイツ2つ(88s/99s)のシャンポン受けを残すのが広い。' },
- { situ:'東3局・5巡目・先制',
-   hand:['1m','2m','4m','5m','6m','6p','7p','8p','9p','9p','4s','5s','6s','9s'],
-   ans:['9s'],
-   expl:'浮いてる<b>9s</b>を切ればペンチャン<b>3m待ちのテンパイ</b>。愚形でも先制ならノータイム即リーチ。リーチ自体に1翻+裏ドラの価値がある。' },
- { situ:'東1局・自分は南家・6巡目',
-   hand:['3m','4m','5m','9m','2p','3p','4p','5p','5s','6s','7s','8s','E','E'],
-   ans:['9m'],
-   expl:'4ブロック+東トイツ(場風で役牌!)。5つ目のブロック候補は浮き牌の 9m・2p(5p)・5s(8s)。浮き牌の価値は<b>真ん中ほど高い</b>ので、一番端の<b>9m</b>から切る。' },
- { situ:'南2局・下家がリーチ! 西は下家の現物。自分は2向聴',
-   hand:['2m','4m','5m','6m','7m','7p','8p','8p','9p','3s','4s','5s','6s','W'],
-   ans:['W'],
-   expl:'2向聴の安い手でリーチを受けたら<b>ベタオリ一択</b>。切る順は 現物→スジ→字牌。今は現物の<b>西</b>から。攻めへん勇気が一番の上達や。' },
-];
-
 // ---------- 押し引きクイズ ----------
 const HANDAN = [
  { q:'6巡目、自分が一番乗りで両面待ちテンパイ。役はリーチのみ。どうする?',
@@ -417,36 +393,88 @@ const YOGO = [
 
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
+function discardStats(hand){
+  const visible={}; hand.forEach(t=>visible[t]=(visible[t]||0)+1);
+  return [...new Set(hand)].map(discard=>{
+    const after=hand.slice(); after.splice(after.indexOf(discard),1);
+    const current=shanten(after);
+    const effective=[];
+    let ukeire=0;
+    for(const draw of ALL_TILES){
+      const left=4-(visible[draw]||0);
+      if(left>0 && shanten(after.concat(draw))<current){
+        effective.push(draw); ukeire+=left;
+      }
+    }
+    return {discard,current,effective,ukeire};
+  });
+}
+
+function genNanikiru(){
+  for(let attempt=0;attempt<100;attempt++){
+    const base=genHand();
+    const counts={}; base.forEach(t=>counts[t]=(counts[t]||0)+1);
+    const drawable=ALL_TILES.filter(t=>(counts[t]||0)<4);
+    const hand=sortHand(base.concat(drawable[randInt(drawable.length)]));
+    const stats=discardStats(hand);
+    const minShanten=Math.min(...stats.map(s=>s.current));
+    const candidates=stats.filter(s=>s.current===minShanten);
+    const maxUkeire=Math.max(...candidates.map(s=>s.ukeire));
+    const best=candidates.filter(s=>s.ukeire===maxUkeire);
+    const nextBest=Math.max(...candidates.filter(s=>s.ukeire<maxUkeire).map(s=>s.ukeire),-1);
+    if(minShanten<=1 && best.length<=3 && maxUkeire>=2 && maxUkeire-nextBest>=2){
+      return {hand,stats,best};
+    }
+  }
+  const hand=sortHand(genHand().concat('1m'));
+  const stats=discardStats(hand);
+  const minShanten=Math.min(...stats.map(s=>s.current));
+  const candidates=stats.filter(s=>s.current===minShanten);
+  const maxUkeire=Math.max(...candidates.map(s=>s.ukeire));
+  return {hand,stats,best:candidates.filter(s=>s.ukeire===maxUkeire)};
+}
+
+function shantenName(n){ return n===0?'テンパイ':`${n}シャンテン`; }
+function effectiveText(stat){
+  const names=stat.effective.map(winTileName).join('・');
+  return names ? `${names}の計${stat.ukeire}枚` : 'なし';
+}
+
 function makeNanikiru(el){
-  let idx=0, score=0;
-  function render(){
-    if(idx>=NANIKIRU.length){ return renderSummary(el,score,NANIKIRU.length,'牌効率の感覚、ええ感じや。','次は「押し引き」タブへ。',()=>{idx=0;score=0;render();}); }
-    const p = NANIKIRU[idx];
+  let streak=0,total=0;
+  function newQ(){
+    const q=genNanikiru();
+    const answers=q.best.map(s=>s.discard);
     el.innerHTML = `
-      <div class="progress"><span>第${idx+1}問 / 全${NANIKIRU.length}問</span><span>正解 ${score}</span></div>
-      <span class="situ">${p.situ}</span>
+      <div class="progress"><span>第${total+1}問・ランダム出題</span><span>連続正解 ${streak}</span></div>
+      <span class="situ">牌効率・受け入れ最大</span>
       <div class="qtext">何を切る? 牌をタップ!</div>
-      <div class="hand">${p.hand.map(c=>tileHTML(c)).join('')}</div>
+      <div class="hand">${q.hand.map(c=>tileHTML(c)).join('')}</div>
       <div class="result" id="res"></div>
       <button class="nextbtn" id="next">次の問題へ</button>`;
     const tiles=[...el.querySelectorAll('.tile')];
     tiles.forEach(t=>t.addEventListener('click',()=>{
-      const ok = p.ans.includes(t.dataset.code);
-      if(ok) score++;
+      const picked=t.dataset.code;
+      const pickedStat=q.stats.find(s=>s.discard===picked);
+      const ok=answers.includes(picked);
+      total++; if(ok)streak++; else streak=0;
       tiles.forEach(x=>{
         x.disabled=true; x.classList.add('static');
         if(x===t) x.classList.add(ok?'picked-right':'picked-wrong');
-        else if(!ok && p.ans.includes(x.dataset.code)) x.classList.add('picked-right');
+        else if(!ok && answers.includes(x.dataset.code)) x.classList.add('picked-right');
         else x.classList.add('dim');
       });
+      const bestNames=q.best.map(s=>winTileName(s.discard)).join('・');
+      const best=q.best[0];
+      const comparison=ok ? '' : `<br>選んだ${winTileName(picked)}切りは${shantenName(pickedStat.current)}、有効牌は${effectiveText(pickedStat)}。`;
       const res=el.querySelector('#res');
       res.className='result show '+(ok?'ok':'ng');
-      res.innerHTML=`<div class="verdict">${ok?'正解!':'惜しい!'}</div>${p.expl}`;
+      res.innerHTML=`<div class="verdict">${ok?'正解!':'惜しい!'}</div><b>${bestNames}切り</b>が最も広い。${shantenName(best.current)}で、有効牌は<b>${effectiveText(best)}</b>。${comparison}`;
       el.querySelector('#next').classList.add('show');
     },{once:true}));
-    el.querySelector('#next').addEventListener('click',()=>{idx++;render();});
+    el.querySelector('#next').addEventListener('click',newQ);
   }
-  render();
+  newQ();
 }
 
 function makeChoiceQuiz(el, DATA, doneMsg){
