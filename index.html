@@ -91,6 +91,12 @@ h1{
 .tile.static{cursor:default;}
 .minihand{margin-bottom:4px;}
 .minihand .tile{pointer-events:none;}
+.river-label{font-size:12px;font-weight:700;color:var(--gold);margin-top:2px;text-align:center;}
+.river{display:flex;flex-wrap:wrap;justify-content:center;gap:7px 5px;margin:8px 0 18px;}
+.river .tile{pointer-events:none;}
+.river .tile.riichi-mark{outline:2px solid var(--chun);outline-offset:2px;}
+.river-note{text-align:center;font-size:11px;color:rgba(247,242,228,.62);margin-top:-10px;margin-bottom:14px;}
+.reveal-label{font-size:12px;font-weight:700;color:var(--gold);margin-top:12px;text-align:center;}
 .note{font-size:12.5px;font-weight:700;color:var(--gold);text-align:center;margin:6px 0 12px;letter-spacing:.04em;}
 .terms{margin:0 0 12px;background:rgba(0,0,0,.18);border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.8;color:rgba(247,242,228,.85);}
 .terms b{color:var(--gold);font-weight:700;}
@@ -190,12 +196,13 @@ h1{
 <div class="wrap">
 <header>
   <h1>雀力ブートキャンプ</h1>
-  <div class="sub">何切る・押し引き・役。まずは「テンパイ判定」から。一瞬で見抜く目を作ろう。</div>
+  <div class="sub">何切る・安全牌・押し引き・役。まずは「テンパイ判定」から。一瞬で見抜く目を作ろう。</div>
 </header>
 
 <div class="tabs" role="tablist">
   <button class="tab active" data-panel="p-machi" role="tab">テンパイ判定</button>
   <button class="tab" data-panel="p-nanikiru" role="tab">何切る</button>
+  <button class="tab" data-panel="p-safety" role="tab">安全牌</button>
   <button class="tab" data-panel="p-handan" role="tab">押引き</button>
   <button class="tab" data-panel="p-riichi" role="tab">リーチ</button>
   <button class="tab" data-panel="p-yaku" role="tab">役</button>
@@ -205,6 +212,7 @@ h1{
 
 <section id="p-machi" class="panel active"><div class="card" id="machi-card"></div></section>
 <section id="p-nanikiru" class="panel"><div class="card" id="nanikiru-card"></div></section>
+<section id="p-safety" class="panel"><div class="card" id="safety-card"></div></section>
 <section id="p-handan" class="panel"><div class="card" id="handan-card"></div></section>
 <section id="p-riichi" class="panel"><div class="card" id="riichi-card"></div></section>
 <section id="p-yaku" class="panel"><div class="card" id="yaku-card"></div></section>
@@ -691,6 +699,104 @@ function genHand(){
   hand=fixQuads(hand);
   return sortHand(hand);
 }
+
+// ---------- 安全牌選択(ランダムなリーチ手・河・自分の手牌) ----------
+function genSafetyQuiz(){
+  for(let attempt=0;attempt<160;attempt++){
+    let opponent=null,waits=[];
+    for(let g=0;g<80;g++){
+      const candidate=genHand();
+      const candidateWaits=calcWaits(candidate);
+      if(candidateWaits.length>=1 && candidateWaits.length<=3){ opponent=candidate; waits=candidateWaits; break; }
+    }
+    if(!opponent) continue;
+
+    const pool={}; ALL_TILES.forEach(t=>pool[t]=4);
+    opponent.forEach(t=>pool[t]--);
+    const river=[];
+    const riverLength=10+randInt(3);
+    while(river.length<riverLength){
+      const choices=ALL_TILES.filter(t=>pool[t]>0 && !waits.includes(t));
+      if(!choices.length) break;
+      const t=choices[randInt(choices.length)];
+      pool[t]--; river.push(t);
+    }
+    if(river.length!==riverLength) continue;
+
+    const safeChoices=[...new Set(river)].filter(t=>pool[t]>0);
+    const dangerChoices=waits.filter(t=>pool[t]>0);
+    if(!safeChoices.length || !dangerChoices.length) continue;
+    const safe=safeChoices[randInt(safeChoices.length)];
+    const danger=dangerChoices[randInt(dangerChoices.length)];
+    const player=[safe,danger]; pool[safe]--; pool[danger]--;
+    const riverSet=new Set(river);
+    while(player.length<14){
+      const choices=ALL_TILES.filter(t=>pool[t]>0 && !riverSet.has(t) && !waits.includes(t) && t!==safe);
+      if(!choices.length) break;
+      const t=choices[randInt(choices.length)];
+      pool[t]--; player.push(t);
+    }
+    if(player.length!==14) continue;
+    return {
+      opponent:sortHand(opponent), waits, river,
+      riichiIndex:5+randInt(river.length-5), player:sortHand(player), safe, danger
+    };
+  }
+  return null;
+}
+
+function makeSafetyQuiz(el){
+  let streak=0,total=0;
+  function newQ(){
+    const q=genSafetyQuiz();
+    if(!q){ el.innerHTML='<div class="qtext">問題を生成できませんでした。再読み込みしてください。</div>'; return; }
+    el.innerHTML=`
+      <div class="progress"><span>第${total+1}問・ランダム出題</span><span>連続正解 ${streak}</span></div>
+      <span class="situ">対面からリーチ!</span>
+      <div class="qtext">河を読んで、ロンされない牌を切れ!</div>
+      <div class="river-label">相手の捨て牌</div>
+      <div class="river">${q.river.map((t,i)=>tileHTML(t,'mini static'+(i===q.riichiIndex?' riichi-mark':''),'span')).join('')}</div>
+      <div class="river-note">赤枠はリーチ宣言牌。現物はリーチ者が自分で捨てた牌や。</div>
+      <div class="hand">${q.player.map(c=>tileHTML(c)).join('')}</div>
+      <div class="result" id="res"></div>
+      <button class="nextbtn" id="next">次の問題へ</button>`;
+    const tiles=[...el.querySelectorAll('.hand .tile')];
+    tiles.forEach(t=>t.addEventListener('click',()=>{
+      const picked=t.dataset.code;
+      const isGenbutsu=q.river.includes(picked);
+      const isDealIn=q.waits.includes(picked);
+      total++; if(isGenbutsu)streak++; else streak=0;
+      tiles.forEach(x=>{
+        x.disabled=true; x.classList.add('static');
+        if(x.dataset.code===q.safe) x.classList.add('picked-right');
+        else if(x===t) x.classList.add(isGenbutsu?'picked-right':'picked-wrong');
+        else x.classList.add('dim');
+      });
+      let verdict,reason;
+      if(isGenbutsu){
+        verdict='安全!';
+        reason=`${winTileName(picked)}は河にある<b>現物</b>。相手はフリテンになるため、この相手からロンされへん。`;
+      } else if(isDealIn){
+        verdict='放銃…';
+        reason=`${winTileName(picked)}は実際の当たり牌。河にない牌を勘だけで切ると刺さることがある。`;
+      } else {
+        verdict='今回は通った';
+        reason=`${winTileName(picked)}は今回の当たり牌ではないけど、河だけでは安全と断定できへん。確実に降りるなら現物の<b>${winTileName(q.safe)}</b>や。`;
+      }
+      const hidden=q.opponent.map(t=>tileHTML(t,'mini static','span')).join('');
+      const waitTiles=q.waits.map(t=>tileHTML(t,'mini static ghost','span')).join('');
+      const res=el.querySelector('#res');
+      res.className='result show '+(isGenbutsu?'ok':'ng');
+      res.innerHTML=`<div class="verdict">${verdict}</div>${reason}
+        <div class="reveal-label">相手の実際の手牌</div><div class="hand minihand">${hidden}</div>
+        <div class="waitline">待ち ${waitTiles}</div>
+        <div style="font-size:12px;color:rgba(247,242,228,.72);margin-top:8px;">河から手牌そのものは断定できない。まず現物、現物がなければスジなどで危険度を下げる。</div>`;
+      el.querySelector('#next').classList.add('show');
+    },{once:true}));
+    el.querySelector('#next').addEventListener('click',newQ);
+  }
+  newQ();
+}
 function winTileName(code){
   const KJ=['','一','二','三','四','五','六','七','八','九'];
   const H={E:'東',S:'南',W:'西',N:'北',P:'白',F:'發',C:'中'};
@@ -779,6 +885,7 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 
 makeMachi(document.getElementById('machi-card'));
 makeNanikiru(document.getElementById('nanikiru-card'));
+makeSafetyQuiz(document.getElementById('safety-card'));
 makeChoiceQuiz(document.getElementById('handan-card'), HANDAN, ['押し引きの判断、もう初心者ちゃうで。','次は「リーチ」タブで見極め力を鍛えよう。']);
 makeChoiceQuiz(document.getElementById('riichi-card'), RIICHI, ['リーチ判断は完璧や。卓で迷わんで済むな。','「役」タブも仕上げよか。']);
 makeChoiceQuiz(document.getElementById('yaku-card'), YAKU, ['役はバッチリ。あとは実戦あるのみ。','「用語」タブで卓の会話についていけるようにしよう。']);
