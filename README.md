@@ -13,3 +13,7 @@ https://hsbl-ko-gyo.github.io/mahjong-bootcamp/
 ## 制作者
 
 [ハシビロ工業](https://sites.google.com/view/hsbl-industrial-hp/home)
+
+## ライセンス
+
+[MIT License](LICENSE)
