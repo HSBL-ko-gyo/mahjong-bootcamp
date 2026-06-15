@@ -6,7 +6,7 @@
 
 https://hsbl-ko-gyo.github.io/mahjong-bootcamp/
 
-## 実践形式練習
+## 実践式練習
 
 対局に近い形式で練習する場合はこちらです。
 
