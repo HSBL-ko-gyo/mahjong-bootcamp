@@ -10,7 +10,7 @@ https://hsbl-ko-gyo.github.io/mahjong-bootcamp/
 
 対局に近い形式で練習する場合はこちらです。
 
-https://hsbl-s800.pages.dev/
+https://bakusoku-mahjong.hsbl-ko-gyo.com/
 
 ## 使い方
 
