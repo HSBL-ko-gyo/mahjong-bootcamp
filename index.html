@@ -38,16 +38,6 @@ h1{
   text-shadow:0 2px 8px rgba(0,0,0,.5);
 }
 .sub{font-size:12.5px;color:rgba(247,242,228,.75);margin-top:6px;}
-.practice-link{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin:14px 0 4px;padding:12px 14px;border-radius:10px;
-  background:rgba(0,0,0,.18);border:1px solid rgba(232,200,121,.28);
-  color:var(--ivory);text-decoration:none;
-}
-.practice-link span{font-size:13px;color:rgba(247,242,228,.78);}
-.practice-link strong{font-size:14px;color:var(--gold);white-space:nowrap;}
-.practice-link:hover{background:rgba(0,0,0,.27);border-color:rgba(232,200,121,.55);}
-.practice-link:focus-visible{outline:3px solid var(--gold);outline-offset:3px;}
 /* tabs */
 .tabs{display:flex;gap:2px;margin:18px 0 16px;border-bottom:2px solid rgba(232,200,121,.35);overflow-x:auto;scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
@@ -190,6 +180,8 @@ h1{
   margin-top:24px;text-align:center;font-size:12px;
   color:rgba(247,242,228,.62);
 }
+.site-credit .practice-footer{margin-bottom:10px;font-size:13px;}
+.site-credit .practice-footer a{font-size:14px;}
 .site-credit .separator{margin:0 8px;color:rgba(247,242,228,.35);}
 .site-credit a{
   color:var(--gold);font-weight:700;text-decoration:none;
@@ -208,11 +200,6 @@ h1{
   <h1>麻雀ブートキャンプ</h1>
   <div class="sub">何切る・安全牌・押し引き・役。まずは「テンパイ判定」から。一瞬で見抜く目を作ろう。</div>
 </header>
-
-<a class="practice-link" href="https://hsbl-s800.pages.dev/" target="_blank" rel="noopener noreferrer">
-  <span>対局に近い形で試したい人向け</span>
-  <strong>実践形式練習はこちら →</strong>
-</a>
 
 <div class="tabs" role="tablist">
   <button class="tab active" data-panel="p-machi" role="tab">テンパイ判定</button>
@@ -244,9 +231,11 @@ h1{
   </div>
 </section>
 <footer class="site-credit">
-  制作者 <a href="https://sites.google.com/view/hsbl-industrial-hp/home" target="_blank" rel="noopener noreferrer">ハシビロ工業</a>
-  <span class="separator" aria-hidden="true">|</span>
-  <a href="https://github.com/HSBL-ko-gyo/mahjong-bootcamp" target="_blank" rel="noopener noreferrer">GitHub</a>
+  <div class="practice-footer">対局に近い形で試したい人向け<br><a href="https://hsbl-s800.pages.dev/" target="_blank" rel="noopener noreferrer">実践形式練習はこちら →</a></div>
+  <div>制作者 <a href="https://sites.google.com/view/hsbl-industrial-hp/home" target="_blank" rel="noopener noreferrer">ハシビロ工業</a>
+    <span class="separator" aria-hidden="true">|</span>
+    <a href="https://github.com/HSBL-ko-gyo/mahjong-bootcamp" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
 </footer>
 </div>
 
